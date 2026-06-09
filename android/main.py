@@ -27,7 +27,14 @@ from kivy.uix.scrollview import ScrollView
 from kivy.utils import get_color_from_hex as H
 from kivy.core.window import Window
 
-import yt_dlp
+# yt-dlp is imported lazily/guarded so a problem loading it can never stop the
+# app from opening — we surface it in the UI instead.
+try:
+    import yt_dlp
+    _YTDLP_ERR = None
+except Exception as _e:  # pragma: no cover
+    yt_dlp = None
+    _YTDLP_ERR = str(_e)
 
 # ---- Android storage + permissions (no-ops on desktop) ------------------
 ON_ANDROID = False
@@ -162,6 +169,10 @@ class Root(BoxLayout):
         if not url:
             self.set_status("Please paste a link first.")
             return
+        if yt_dlp is None:
+            self.set_status("Download engine failed to load.")
+            self.log("ERROR: yt-dlp did not load: " + str(_YTDLP_ERR))
+            return
         self.cancel_flag.clear()
         self.set_running(True)
         self.set_progress(0)
@@ -257,5 +268,22 @@ class VideoDownloaderApp(App):
         return Root(self)
 
 
+def _write_crash(exc_text):
+    """If the app crashes on startup, save the reason so it can be diagnosed."""
+    for d in ("/sdcard/Download", os.path.expanduser("~")):
+        try:
+            with open(os.path.join(d, "swiftgrab_crash.txt"), "w",
+                      encoding="utf-8") as f:
+                f.write(exc_text)
+            break
+        except Exception:
+            continue
+
+
 if __name__ == "__main__":
-    VideoDownloaderApp().run()
+    import traceback
+    try:
+        VideoDownloaderApp().run()
+    except Exception:
+        _write_crash(traceback.format_exc())
+        raise
