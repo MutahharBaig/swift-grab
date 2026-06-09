@@ -1,17 +1,17 @@
 name: Build Android APK
 
 # Builds the APK in the cloud (no Linux needed on your PC).
-# Runs on every push, and can be started manually from the Actions tab.
+# Runs on every push and can be started manually from the Actions tab.
 on:
   push:
-    paths:
-      - "android/**"
-      - ".github/workflows/build-apk.yml"
   workflow_dispatch:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    # Pinned to 22.04 on purpose — the Android build tools need libraries
+    # that were removed from Ubuntu 24.04.
+    runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,11 +21,23 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build the debug APK with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          workdir: android
-          command: buildozer android debug
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev build-essential ccache
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install "Cython==0.29.36" buildozer
+
+      - name: Build the debug APK
+        working-directory: android
+        run: buildozer android debug
 
       - name: Upload the APK
         uses: actions/upload-artifact@v4

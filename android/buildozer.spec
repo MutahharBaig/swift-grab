@@ -24,6 +24,9 @@ android.ndk_api = 24
 android.archs = arm64-v8a,armeabi-v7a
 android.allow_backup = True
 
+# Accept the Android SDK license automatically (needed for unattended CI builds).
+android.accept_sdk_license = True
+
 # Needed so the app can write to the shared Download/ folder on older APIs.
 android.legacy_storage = True
 
