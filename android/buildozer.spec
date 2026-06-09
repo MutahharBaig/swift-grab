@@ -10,7 +10,7 @@ version = 1.0
 
 # Minimal, build-safe set for the first APK (all pure-Python).
 # (Optional C-extension extras like pycryptodomex/brotli are added later.)
-requirements = python3,kivy==2.3.0,yt-dlp,certifi,setuptools
+requirements = python3,kivy==2.3.1,yt-dlp,certifi,setuptools
 
 orientation = portrait
 fullscreen = 0
